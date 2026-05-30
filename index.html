@@ -6,9 +6,6 @@
   <title>方雅庭 · 个人简历</title>
 
   <style>
-    /* ==========================================
-       CSS VARIABLES — 配色主题
-       ========================================== */
     :root {
       --bg:           #fafaf9;
       --card-bg:      #ffffff;
@@ -24,7 +21,6 @@
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
     body {
@@ -36,69 +32,56 @@
     }
 
     /* ==========================================
-       EDIT TOOLBAR — 右下角浮动按钮
+       EXPORT BUTTON — 右下角导出按钮
        ========================================== */
-    .edit-toolbar {
+    .export-btn {
       position: fixed;
       bottom: 1.5rem;
       right: 1.5rem;
       z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      align-items: flex-end;
-    }
-
-    .edit-toolbar button {
       font-family: var(--font-sans);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
-      padding: 0.65rem 1.25rem;
+      padding: 0.55rem 1.1rem;
       border-radius: 999px;
       border: none;
       cursor: pointer;
-      box-shadow: 0 2px 14px rgba(0,0,0,0.15);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      white-space: nowrap;
-    }
-
-    .btn-edit {
-      background: #1c1c1e;
-      color: #fff;
-    }
-    .btn-edit:hover { background: #000; transform: translateY(-1px); }
-    .btn-edit.active { background: #22c55e; }
-
-    .btn-export {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
       background: #2563eb;
       color: #fff;
-      display: none;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s ease;
     }
-    .btn-export:hover { background: #1d4ed8; }
-    .btn-export.show { display: flex; }
+    .export-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
 
-    /* 编辑模式下的文字高亮 */
-    body.editing [data-editable] {
-      outline: 2px dashed #2563eb;
-      outline-offset: 4px;
+    /* ==========================================
+       DOUBLE-CLICK HIGHLIGHT — 双击编辑高亮
+       ========================================== */
+    [data-editable] {
+      cursor: default;
+      transition: all 0.15s ease;
       border-radius: 4px;
-      cursor: text;
-      background: rgba(37, 99, 235, 0.03);
-      transition: outline 0.15s;
+      padding: 1px 3px;
+      margin: -1px -3px;
     }
-    body.editing [data-editable]:focus {
-      outline: 2px solid #2563eb;
-      background: rgba(37, 99, 235, 0.06);
-    }
-    body.editing [data-editable]:hover {
+
+    [data-editable]:hover {
       background: rgba(37, 99, 235, 0.04);
     }
 
-    /* 编辑提示条 */
-    .edit-hint {
+    [data-editable][contenteditable="true"] {
+      outline: 2px solid #2563eb;
+      outline-offset: 3px;
+      background: rgba(37, 99, 235, 0.04);
+      cursor: text;
+      padding: 1px 3px;
+      margin: -1px -3px;
+    }
+
+    /* 编辑提示 */
+    .edit-toast {
       display: none;
       position: fixed;
       top: 1rem;
@@ -107,18 +90,112 @@
       z-index: 9999;
       background: #1c1c1e;
       color: #fff;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 500;
-      padding: 0.55rem 1.25rem;
+      padding: 0.5rem 1.2rem;
       border-radius: 999px;
       box-shadow: 0 2px 16px rgba(0,0,0,0.2);
       pointer-events: none;
-      animation: hintIn 0.3s ease;
+      animation: toastIn 0.3s ease;
     }
-    .edit-hint.show { display: block; }
-    @keyframes hintIn {
+    .edit-toast.show { display: block; }
+    @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
       to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* ==========================================
+       ADD BUTTON — 加号按钮
+       ========================================== */
+    .add-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px dashed #c7c7cc;
+      background: transparent;
+      color: #8e8e93;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+      flex-shrink: 0;
+    }
+    .add-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-style: solid;
+    }
+
+    .add-btn-wrap {
+      text-align: center;
+      margin-top: 0.25rem;
+    }
+
+    /* 卡片内的删除按钮（悬浮显示） */
+    .card-wrapper {
+      position: relative;
+    }
+    .card-wrapper .delete-btn {
+      display: none;
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.15s;
+    }
+    .card-wrapper:hover .delete-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-wrapper .delete-btn:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+
+    /* 技能标签的删除按钮 */
+    .skill-tag-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .skill-tag-wrap .delete-tag-btn {
+      display: none;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.7rem;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+      line-height: 1;
+    }
+    .skill-tag-wrap:hover .delete-tag-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .skill-tag-wrap .delete-tag-btn:hover {
+      background: #dc2626;
+      transform: scale(1.1);
     }
 
     /* ==========================================
@@ -284,7 +361,6 @@
       border-color: var(--accent);
       background: var(--accent-dim);
     }
-
     .social-links svg { width: 18px; height: 18px; flex-shrink: 0; }
 
     /* ==========================================
@@ -314,19 +390,15 @@
       margin-bottom: 1rem;
       transition: box-shadow 0.2s ease;
     }
-
     .experience-card:hover {
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     }
-
     .experience-card .role { font-weight: 700; font-size: 1.05rem; }
     .experience-card .company { color: var(--accent); font-weight: 500; font-size: 0.95rem; }
-
     .experience-card .meta {
       display: flex; flex-wrap: wrap; gap: 0.75rem;
       align-items: center; margin-top: 0.3rem; margin-bottom: 0.8rem;
     }
-
     .experience-card .duration {
       font-size: 0.82rem;
       color: var(--text-muted);
@@ -334,20 +406,17 @@
       padding: 0.15rem 0.65rem;
       border-radius: 999px;
     }
-
     .experience-card .desc {
       color: var(--text-muted);
       font-size: 0.9rem;
       line-height: 1.7;
       list-style: none;
     }
-
     .experience-card .desc li {
       position: relative;
       padding-left: 1.1rem;
       margin-bottom: 0.35rem;
     }
-
     .experience-card .desc li::before {
       content: "—";
       position: absolute;
@@ -358,7 +427,7 @@
     /* ==========================================
        SKILLS
        ========================================== */
-    .skills-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .skills-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
 
     .skill-tag {
       font-size: 0.85rem;
@@ -371,7 +440,6 @@
       color: var(--text);
       transition: all 0.2s ease;
     }
-
     .skill-tag:hover {
       border-color: var(--accent);
       color: var(--accent);
@@ -398,9 +466,7 @@
       font-size: 0.92rem;
       transition: box-shadow 0.2s ease;
     }
-
     .contact-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-
     .contact-item .icon {
       width: 38px; height: 38px;
       border-radius: 10px;
@@ -410,16 +476,13 @@
       justify-content: center;
       flex-shrink: 0;
     }
-
     .contact-item .icon svg { width: 18px; height: 18px; color: var(--accent); }
-
     .contact-item .label {
       font-size: 0.75rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-
     .contact-item .value { font-weight: 500; }
     .contact-item a { color: inherit; text-decoration: none; }
     .contact-item a:hover { color: var(--accent); }
@@ -444,31 +507,24 @@
       .header h1 { font-size: 1.6rem; }
       .experience-card { padding: 1.25rem 1.2rem; }
       .contact-list { grid-template-columns: 1fr; }
-      .edit-toolbar { bottom: 1rem; right: 0.75rem; }
-      .edit-toolbar button { font-size: 0.78rem; padding: 0.5rem 1rem; }
+      .export-btn { bottom: 1rem; right: 0.75rem; font-size: 0.75rem; padding: 0.45rem 0.9rem; }
     }
 
-    /* ==========================================
-       PRINT
-       ========================================== */
     @media print {
       body { background: #fff; padding: 0; font-size: 12px; }
       .experience-card, .contact-item { box-shadow: none; break-inside: avoid; }
       .social-links a { border: none; padding: 0 0.5rem; }
-      .edit-toolbar, .edit-hint, .modal-overlay { display: none !important; }
+      .export-btn, .edit-toast, .modal-overlay, .add-btn, .add-btn-wrap, .delete-btn, .delete-tag-btn { display: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <!-- 顶部编辑提示 -->
-  <div class="edit-hint" id="editHint">💡 直接点击蓝色虚线框内的文字即可修改</div>
+  <!-- 编辑提示 -->
+  <div class="edit-toast" id="editToast">✨ 正在编辑中，点击其他地方或按 Esc 退出编辑</div>
 
-  <!-- 右下角浮动按钮 -->
-  <div class="edit-toolbar">
-    <button class="btn-export" id="btnExport">📋 导出 HTML</button>
-    <button class="btn-edit" id="btnEdit">✏️ 编辑模式</button>
-  </div>
+  <!-- 导出按钮 -->
+  <button class="export-btn" id="btnExport">📋 导出 HTML</button>
 
   <!-- 导出弹窗 -->
   <div class="modal-overlay" id="modalOverlay">
@@ -502,7 +558,6 @@
       </p>
 
       <div class="social-links">
-        <!-- ★ 链接地址请在导出后搜索 "#" 替换 ★ -->
         <a href="https://github.com/bufang112233" target="_blank" rel="noopener" aria-label="GitHub">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
@@ -529,86 +584,114 @@
       </div>
     </header>
 
-    <section class="section">
+    <!-- ==================== 教育背景 ==================== -->
+    <section class="section" id="sec-education">
       <h2 class="section-title">🎓 教育背景</h2>
 
-      <div class="experience-card">
-        <p class="role" data-editable>电子信息工程（集成电路方向）</p>
-        <p class="company" data-editable>五邑大学</p>
-        <div class="meta">
-          <span class="duration" data-editable>2021.09 — 2025.06</span>
+      <div class="card-wrapper">
+        <button class="delete-btn" title="删除此项">✕</button>
+        <div class="experience-card">
+          <p class="role" data-editable>电子信息工程（集成电路方向）</p>
+          <p class="company" data-editable>五邑大学</p>
+          <div class="meta">
+            <span class="duration" data-editable>2021.09 — 2025.06</span>
+          </div>
+          <ul class="desc">
+            <li data-editable>主修课程：C 语言程序设计、模拟电路、数字电路、嵌入式系统、信号与系统</li>
+            <li data-editable>毕业设计：基于 STM32 的智能环境监测系统（进行中）</li>
+            <li data-editable>参加校级电子设计竞赛，获二等奖</li>
+          </ul>
         </div>
-        <ul class="desc">
-          <li data-editable>主修课程：C 语言程序设计、模拟电路、数字电路、嵌入式系统、信号与系统</li>
-          <li data-editable>毕业设计：基于 STM32 的智能环境监测系统（进行中）</li>
-          <li data-editable>参加校级电子设计竞赛，获二等奖</li>
-        </ul>
+      </div>
+
+      <div class="add-btn-wrap">
+        <button class="add-btn" onclick="addCard('sec-education')" title="添加新的教育经历">+</button>
       </div>
     </section>
 
-    <section class="section">
+    <!-- ==================== 项目经历 ==================== -->
+    <section class="section" id="sec-project">
       <h2 class="section-title">📂 项目经历</h2>
 
-      <div class="experience-card">
-        <p class="role" data-editable>基于 STM32 的智能环境监测系统</p>
-        <p class="company" data-editable>毕业设计 · 个人项目</p>
-        <div class="meta">
-          <span class="duration" data-editable>2024.09 — 至今</span>
+      <div class="card-wrapper">
+        <button class="delete-btn" title="删除此项">✕</button>
+        <div class="experience-card">
+          <p class="role" data-editable>基于 STM32 的智能环境监测系统</p>
+          <p class="company" data-editable>毕业设计 · 个人项目</p>
+          <div class="meta">
+            <span class="duration" data-editable>2024.09 — 至今</span>
+          </div>
+          <ul class="desc">
+            <li data-editable>使用 STM32F103 作为主控芯片，搭配温湿度传感器、PM2.5 传感器采集环境数据</li>
+            <li data-editable>通过 OLED 屏幕实时显示数据，并支持蓝牙模块将数据上传至手机 APP</li>
+            <li data-editable>独立完成原理图设计、PCB 布局与 C 语言固件开发</li>
+          </ul>
         </div>
-        <ul class="desc">
-          <li data-editable>使用 STM32F103 作为主控芯片，搭配温湿度传感器、PM2.5 传感器采集环境数据</li>
-          <li data-editable>通过 OLED 屏幕实时显示数据，并支持蓝牙模块将数据上传至手机 APP</li>
-          <li data-editable>独立完成原理图设计、PCB 布局与 C 语言固件开发</li>
-        </ul>
       </div>
 
-      <div class="experience-card">
-        <p class="role" data-editable>智能循迹小车</p>
-        <p class="company" data-editable>校级电子设计竞赛 · 团队项目</p>
-        <div class="meta">
-          <span class="duration" data-editable>2023.10 — 2023.12</span>
+      <div class="card-wrapper">
+        <button class="delete-btn" title="删除此项">✕</button>
+        <div class="experience-card">
+          <p class="role" data-editable>智能循迹小车</p>
+          <p class="company" data-editable>校级电子设计竞赛 · 团队项目</p>
+          <div class="meta">
+            <span class="duration" data-editable>2023.10 — 2023.12</span>
+          </div>
+          <ul class="desc">
+            <li data-editable>基于 C51 单片机，使用红外传感器实现路径识别与自动循迹</li>
+            <li data-editable>负责软件部分：编写 PWM 电机控制与 PID 算法代码</li>
+            <li data-editable>获校级电子设计竞赛二等奖</li>
+          </ul>
         </div>
-        <ul class="desc">
-          <li data-editable>基于 C51 单片机，使用红外传感器实现路径识别与自动循迹</li>
-          <li data-editable>负责软件部分：编写 PWM 电机控制与 PID 算法代码</li>
-          <li data-editable>获校级电子设计竞赛二等奖</li>
-        </ul>
       </div>
 
-      <div class="experience-card">
-        <p class="role" data-editable>简易数字万用表</p>
-        <p class="company" data-editable>课程设计</p>
-        <div class="meta">
-          <span class="duration" data-editable>2023.03 — 2023.06</span>
+      <div class="card-wrapper">
+        <button class="delete-btn" title="删除此项">✕</button>
+        <div class="experience-card">
+          <p class="role" data-editable>简易数字万用表</p>
+          <p class="company" data-editable>课程设计</p>
+          <div class="meta">
+            <span class="duration" data-editable>2023.03 — 2023.06</span>
+          </div>
+          <ul class="desc">
+            <li data-editable>基于 ADC 采样原理，实现对电压、电流、电阻的测量功能</li>
+            <li data-editable>使用 C 语言编写数据采集与显示程序，LCD 显示测量结果</li>
+          </ul>
         </div>
-        <ul class="desc">
-          <li data-editable>基于 ADC 采样原理，实现对电压、电流、电阻的测量功能</li>
-          <li data-editable>使用 C 语言编写数据采集与显示程序，LCD 显示测量结果</li>
-        </ul>
+      </div>
+
+      <div class="add-btn-wrap">
+        <button class="add-btn" onclick="addCard('sec-project')" title="添加新的项目">+</button>
       </div>
     </section>
 
-    <section class="section">
+    <!-- ==================== 技能栈 ==================== -->
+    <section class="section" id="sec-skills">
       <h2 class="section-title">🛠 技能栈</h2>
 
-      <div class="skills-grid">
-        <span class="skill-tag" data-editable>C 语言</span>
-        <span class="skill-tag" data-editable>STM32（学习中）</span>
-        <span class="skill-tag" data-editable>PCB 设计（学习中）</span>
-        <span class="skill-tag" data-editable>Keil / IAR</span>
-        <span class="skill-tag" data-editable>Altium Designer</span>
-        <span class="skill-tag" data-editable>模拟电路</span>
-        <span class="skill-tag" data-editable>数字电路</span>
-        <span class="skill-tag" data-editable>嵌入式系统</span>
-        <span class="skill-tag" data-editable>Git / GitHub</span>
-        <span class="skill-tag" data-editable>Linux 基础</span>
+      <div class="skills-grid" id="skillsGrid">
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>C 语言</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>STM32（学习中）</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>PCB 设计（学习中）</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>Keil / IAR</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>Altium Designer</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>模拟电路</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>数字电路</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>嵌入式系统</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>Git / GitHub</span><button class="delete-tag-btn" title="删除">✕</button></span>
+        <span class="skill-tag-wrap"><span class="skill-tag" data-editable>Linux 基础</span><button class="delete-tag-btn" title="删除">✕</button></span>
+      </div>
+
+      <div class="add-btn-wrap">
+        <button class="add-btn" onclick="addSkill()" title="添加新技能">+</button>
       </div>
     </section>
 
-    <section class="section">
+    <!-- ==================== 联系方式 ==================== -->
+    <section class="section" id="sec-contact">
       <h2 class="section-title">📬 联系方式</h2>
 
-      <div class="contact-list">
+      <div class="contact-list" id="contactList">
         <div class="contact-item">
           <div class="icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -660,78 +743,198 @@
 
   </div>
 
-  <!-- ========== 编辑功能的 JavaScript ========== -->
+  <!-- ========== JavaScript ========== -->
   <script>
     (function() {
-      var btnEdit   = document.getElementById('btnEdit');
+      var editToast = document.getElementById('editToast');
       var btnExport = document.getElementById('btnExport');
-      var editHint  = document.getElementById('editHint');
       var modalOverlay = document.getElementById('modalOverlay');
       var modalCode   = document.getElementById('modalCode');
       var btnCopy     = document.getElementById('btnCopy');
       var modalClose  = document.getElementById('modalClose');
-      var editing = false;
+      var toastTimer  = null;
 
-      // ------ 切换编辑模式 ------
-      btnEdit.addEventListener('click', function() {
-        editing = !editing;
+      // ========== 双击编辑 ==========
+      document.addEventListener('dblclick', function(e) {
+        var target = e.target.closest('[data-editable]');
+        if (!target) return;
+        if (target.isContentEditable) return; // 已经在编辑中
 
-        if (editing) {
-          document.body.classList.add('editing');
-          btnEdit.textContent = '✅ 完成编辑';
-          btnEdit.classList.add('active');
-          btnExport.classList.add('show');
-          editHint.classList.add('show');
+        startEdit(target);
+      });
 
-          setTimeout(function() { editHint.classList.remove('show'); }, 5000);
+      function startEdit(el) {
+        el.setAttribute('contenteditable', 'true');
+        el.focus();
 
-          document.querySelectorAll('[data-editable]').forEach(function(el) {
-            el.setAttribute('contenteditable', 'true');
-          });
-        } else {
-          document.body.classList.remove('editing');
-          btnEdit.textContent = '✏️ 编辑模式';
-          btnEdit.classList.remove('active');
-          btnExport.classList.remove('show');
-          editHint.classList.remove('show');
+        // 选中全部文字
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
 
-          document.querySelectorAll('[data-editable]').forEach(function(el) {
-            el.removeAttribute('contenteditable');
-          });
+        showToast('✨ 正在编辑中，点击其他地方或按 Esc 退出编辑');
+      }
+
+      function stopEdit(el) {
+        el.removeAttribute('contenteditable');
+      }
+
+      function stopAllEdits() {
+        document.querySelectorAll('[contenteditable="true"]').forEach(function(el) {
+          el.removeAttribute('contenteditable');
+        });
+      }
+
+      // 点击空白处退出编辑
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-editable]')) return;
+        if (e.target.closest('.add-btn')) return;
+        if (e.target.closest('.delete-btn')) return;
+        if (e.target.closest('.delete-tag-btn')) return;
+        if (e.target.closest('.export-btn')) return;
+        stopAllEdits();
+        hideToast();
+      });
+
+      // Esc 退出编辑
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          if (modalOverlay.classList.contains('show')) {
+            closeModal();
+            return;
+          }
+          stopAllEdits();
+          hideToast();
         }
       });
 
-      // ------ 导出 HTML ------
-      btnExport.addEventListener('click', function() {
-        var wasEditing = editing;
-        if (wasEditing) {
-          document.body.classList.remove('editing');
-          document.querySelectorAll('[data-editable]').forEach(function(el) {
-            el.removeAttribute('contenteditable');
-          });
+      function showToast(msg) {
+        editToast.textContent = msg;
+        editToast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function() { editToast.classList.remove('show'); }, 2500);
+      }
+
+      function hideToast() {
+        editToast.classList.remove('show');
+        clearTimeout(toastTimer);
+      }
+
+      // ========== "+" 按钮 — 添加卡片 ==========
+      window.addCard = function(sectionId) {
+        var section = document.getElementById(sectionId);
+        var addWrap = section.querySelector('.add-btn-wrap');
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'card-wrapper';
+
+        var delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.title = '删除此项';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', function() {
+          wrapper.remove();
+        });
+        wrapper.appendChild(delBtn);
+
+        var card = document.createElement('div');
+        card.className = 'experience-card';
+        card.innerHTML =
+          '<p class="role" data-editable>新条目标题</p>' +
+          '<p class="company" data-editable>副标题</p>' +
+          '<div class="meta"><span class="duration" data-editable>时间</span></div>' +
+          '<ul class="desc">' +
+            '<li data-editable>描述内容（双击编辑）</li>' +
+          '</ul>';
+        wrapper.appendChild(card);
+
+        // 插入到 + 按钮之前
+        section.insertBefore(wrapper, addWrap);
+      };
+
+      // ========== "+" 按钮 — 添加技能 ==========
+      window.addSkill = function() {
+        var grid = document.getElementById('skillsGrid');
+
+        var wrap = document.createElement('span');
+        wrap.className = 'skill-tag-wrap';
+
+        var delBtn = document.createElement('button');
+        delBtn.className = 'delete-tag-btn';
+        delBtn.title = '删除';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', function() {
+          wrap.remove();
+        });
+        wrap.appendChild(delBtn);
+
+        var tag = document.createElement('span');
+        tag.className = 'skill-tag';
+        tag.setAttribute('data-editable', '');
+        tag.textContent = '新技能';
+        wrap.appendChild(tag);
+
+        grid.appendChild(wrap);
+      };
+
+      // ========== 删除卡片（事件委托） ==========
+      document.addEventListener('click', function(e) {
+        var delBtn = e.target.closest('.delete-btn');
+        if (delBtn) {
+          delBtn.closest('.card-wrapper').remove();
         }
+        var delTag = e.target.closest('.delete-tag-btn');
+        if (delTag) {
+          delTag.closest('.skill-tag-wrap').remove();
+        }
+      });
+
+      // ========== 导出 HTML ==========
+      btnExport.addEventListener('click', function() {
+        stopAllEdits();
 
         var clone = document.documentElement.cloneNode(true);
 
-        if (wasEditing) {
-          document.body.classList.add('editing');
-          document.querySelectorAll('[data-editable]').forEach(function(el) {
-            el.setAttribute('contenteditable', 'true');
-          });
-        }
-
-        // 移除编辑工具栏
-        ['.edit-toolbar', '.edit-hint', '.modal-overlay'].forEach(function(sel) {
-          var el = clone.querySelector(sel);
-          if (el) el.remove();
+        // 移除 UI 元素
+        ['.export-btn', '.edit-toast', '.modal-overlay', '.delete-btn', '.delete-tag-btn', '.add-btn-wrap'].forEach(function(sel) {
+          clone.querySelectorAll(sel).forEach(function(el) { el.remove(); });
         });
 
-        // 清理属性
+        // 清理 card-wrapper 和 skill-tag-wrap
+        clone.querySelectorAll('.card-wrapper').forEach(function(w) {
+          var parent = w.parentNode;
+          while (w.firstChild) {
+            parent.insertBefore(w.firstChild, w);
+          }
+          parent.removeChild(w);
+        });
+        clone.querySelectorAll('.skill-tag-wrap').forEach(function(w) {
+          var parent = w.parentNode;
+          while (w.firstChild) {
+            parent.insertBefore(w.firstChild, w);
+          }
+          parent.removeChild(w);
+        });
+
+        // 清理编辑属性
         clone.querySelectorAll('[contenteditable]').forEach(function(el) {
           el.removeAttribute('contenteditable');
         });
         clone.querySelectorAll('[data-editable]').forEach(function(el) {
           el.removeAttribute('data-editable');
+        });
+
+        // 移除 section ID
+        clone.querySelectorAll('section[id]').forEach(function(s) {
+          s.removeAttribute('id');
+        });
+        clone.querySelectorAll('[id="skillsGrid"]').forEach(function(el) {
+          el.removeAttribute('id');
+        });
+        clone.querySelectorAll('[id="contactList"]').forEach(function(el) {
+          el.removeAttribute('id');
         });
 
         // 移除 script
@@ -745,14 +948,14 @@
         btnCopy.classList.remove('copied');
       });
 
-      // ------ 关闭弹窗 ------
+      // ========== 弹窗 ==========
       function closeModal() { modalOverlay.classList.remove('show'); }
       modalClose.addEventListener('click', closeModal);
       modalOverlay.addEventListener('click', function(e) {
         if (e.target === modalOverlay) closeModal();
       });
 
-      // ------ 一键复制 ------
+      // ========== 复制 ==========
       btnCopy.addEventListener('click', function() {
         var text = modalCode.textContent;
         navigator.clipboard.writeText(text).then(function() {
@@ -770,13 +973,6 @@
           sel.addRange(range);
           btnCopy.textContent = '⚠ 请手动 Ctrl+C';
         });
-      });
-
-      // ------ Esc 关闭 ------
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modalOverlay.classList.contains('show')) {
-          closeModal();
-        }
       });
 
     })();
