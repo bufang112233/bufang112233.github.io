@@ -5,17 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>张三 · 个人简历</title>
 
-  <!--
-    ╔══════════════════════════════════╗
-    ║  极简个人简历 · Minimal Resume  ║
-    ║  作者: 张三                      ║
-    ║  仓库: 请替换为你的 GitHub 链接  ║
-    ╚══════════════════════════════════╝
-  -->
-
   <style>
     /* ==========================================
-       CSS VARIABLES — 配色主题，改这里即可换肤
+       CSS VARIABLES — 配色主题
        ========================================== */
     :root {
       --bg:           #fafaf9;
@@ -31,19 +23,9 @@
       --font-mono:    "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
     }
 
-    /* ==========================================
-       RESET & BASE
-       ========================================== */
-    *, *::before, *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html {
-      scroll-behavior: smooth;
-      -webkit-font-smoothing: antialiased;
-    }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
     body {
       font-family: var(--font-sans);
@@ -54,24 +36,194 @@
     }
 
     /* ==========================================
-       CONTAINER
+       EDIT TOOLBAR — 右下角浮动按钮
        ========================================== */
-    .resume {
-      max-width: var(--max-width);
-      margin: 0 auto;
+    .edit-toolbar {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      align-items: flex-end;
+    }
+
+    .edit-toolbar button {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.65rem 1.25rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.15);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+    }
+
+    .btn-edit {
+      background: #1c1c1e;
+      color: #fff;
+    }
+    .btn-edit:hover { background: #000; transform: translateY(-1px); }
+    .btn-edit.active { background: #22c55e; }
+
+    .btn-export {
+      background: #2563eb;
+      color: #fff;
+      display: none;
+    }
+    .btn-export:hover { background: #1d4ed8; }
+    .btn-export.show { display: flex; }
+
+    /* 编辑模式下的文字高亮 */
+    body.editing [data-editable] {
+      outline: 2px dashed #2563eb;
+      outline-offset: 4px;
+      border-radius: 4px;
+      cursor: text;
+      background: rgba(37, 99, 235, 0.03);
+      transition: outline 0.15s;
+    }
+    body.editing [data-editable]:focus {
+      outline: 2px solid #2563eb;
+      background: rgba(37, 99, 235, 0.06);
+    }
+    body.editing [data-editable]:hover {
+      background: rgba(37, 99, 235, 0.04);
+    }
+
+    /* 编辑提示条 */
+    .edit-hint {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      background: #1c1c1e;
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 0.55rem 1.25rem;
+      border-radius: 999px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+      pointer-events: none;
+      animation: hintIn 0.3s ease;
+    }
+    .edit-hint.show { display: block; }
+    @keyframes hintIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
     /* ==========================================
-       HEADER / 个人简介
+       EXPORT MODAL — 导出弹窗
        ========================================== */
-    .header {
-      text-align: center;
-      padding: 3rem 0 2rem;
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 620px;
+      width: 100%;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 { font-size: 1.05rem; font-weight: 700; }
+    .modal-close {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #f3f4f6;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: #e5e7eb; }
+
+    .modal-body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
+    .modal-body p {
+      font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;
+    }
+    .modal-body pre {
+      background: #f5f5f7;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 0.76rem;
+      line-height: 1.5;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 300px;
+      font-family: var(--font-mono);
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+    .modal-footer button {
+      font-family: var(--font-sans);
+      font-size: 0.85rem; font-weight: 600;
+      padding: 0.55rem 1.3rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-copy { background: #2563eb; color: #fff; }
+    .btn-copy:hover { background: #1d4ed8; }
+    .btn-copy.copied { background: #22c55e; }
+
+    /* ==========================================
+       CONTAINER
+       ========================================== */
+    .resume { max-width: var(--max-width); margin: 0 auto; }
+
+    /* ==========================================
+       HEADER
+       ========================================== */
+    .header { text-align: center; padding: 3rem 0 2rem; }
+
     .avatar {
-      width: 96px;
-      height: 96px;
+      width: 96px; height: 96px;
       border-radius: 50%;
       background: var(--accent-dim);
       display: inline-flex;
@@ -83,10 +235,8 @@
     }
 
     .header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.35rem;
+      font-size: 2rem; font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 0.35rem;
     }
 
     .header .title {
@@ -105,7 +255,7 @@
     }
 
     /* ==========================================
-       SOCIAL LINKS — 预留 GitHub 等图标位置
+       SOCIAL LINKS
        ========================================== */
     .social-links {
       display: flex;
@@ -135,19 +285,12 @@
       background: var(--accent-dim);
     }
 
-    /* 内联 SVG 图标大小 */
-    .social-links svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
+    .social-links svg { width: 18px; height: 18px; flex-shrink: 0; }
 
     /* ==========================================
-       SECTION 通用样式
+       SECTION
        ========================================== */
-    .section {
-      margin-top: 2.5rem;
-    }
+    .section { margin-top: 2.5rem; }
 
     .section-title {
       font-size: 0.8rem;
@@ -161,7 +304,7 @@
     }
 
     /* ==========================================
-       WORK EXPERIENCE — 工作经历卡片
+       EXPERIENCE CARDS
        ========================================== */
     .experience-card {
       background: var(--card-bg);
@@ -176,24 +319,12 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     }
 
-    .experience-card .role {
-      font-weight: 700;
-      font-size: 1.05rem;
-    }
-
-    .experience-card .company {
-      color: var(--accent);
-      font-weight: 500;
-      font-size: 0.95rem;
-    }
+    .experience-card .role { font-weight: 700; font-size: 1.05rem; }
+    .experience-card .company { color: var(--accent); font-weight: 500; font-size: 0.95rem; }
 
     .experience-card .meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      align-items: center;
-      margin-top: 0.3rem;
-      margin-bottom: 0.8rem;
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      align-items: center; margin-top: 0.3rem; margin-bottom: 0.8rem;
     }
 
     .experience-card .duration {
@@ -225,13 +356,9 @@
     }
 
     /* ==========================================
-       SKILLS — 技能栈
+       SKILLS
        ========================================== */
-    .skills-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-    }
+    .skills-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 
     .skill-tag {
       font-size: 0.85rem;
@@ -252,7 +379,7 @@
     }
 
     /* ==========================================
-       CONTACT — 联系方式
+       CONTACT
        ========================================== */
     .contact-list {
       display: grid;
@@ -272,13 +399,10 @@
       transition: box-shadow 0.2s ease;
     }
 
-    .contact-item:hover {
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
+    .contact-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
 
     .contact-item .icon {
-      width: 38px;
-      height: 38px;
+      width: 38px; height: 38px;
       border-radius: 10px;
       background: var(--accent-dim);
       display: flex;
@@ -287,11 +411,7 @@
       flex-shrink: 0;
     }
 
-    .contact-item .icon svg {
-      width: 18px;
-      height: 18px;
-      color: var(--accent);
-    }
+    .contact-item .icon svg { width: 18px; height: 18px; color: var(--accent); }
 
     .contact-item .label {
       font-size: 0.75rem;
@@ -300,18 +420,9 @@
       letter-spacing: 0.05em;
     }
 
-    .contact-item .value {
-      font-weight: 500;
-    }
-
-    .contact-item a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .contact-item a:hover {
-      color: var(--accent);
-    }
+    .contact-item .value { font-weight: 500; }
+    .contact-item a { color: inherit; text-decoration: none; }
+    .contact-item a:hover { color: var(--accent); }
 
     /* ==========================================
        FOOTER
@@ -322,169 +433,151 @@
       color: var(--text-muted);
       font-size: 0.8rem;
     }
-
-    .footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
+    .footer a { color: var(--accent); text-decoration: none; }
 
     /* ==========================================
-       RESPONSIVE — 移动端适配
+       RESPONSIVE
        ========================================== */
     @media (max-width: 540px) {
-      body {
-        padding: 1.25rem 0.85rem 3rem;
-      }
-
-      .header {
-        padding: 2rem 0 1.5rem;
-      }
-
-      .header h1 {
-        font-size: 1.6rem;
-      }
-
-      .experience-card {
-        padding: 1.25rem 1.2rem;
-      }
-
-      .contact-list {
-        grid-template-columns: 1fr;
-      }
+      body { padding: 1.25rem 0.85rem 3rem; }
+      .header { padding: 2rem 0 1.5rem; }
+      .header h1 { font-size: 1.6rem; }
+      .experience-card { padding: 1.25rem 1.2rem; }
+      .contact-list { grid-template-columns: 1fr; }
+      .edit-toolbar { bottom: 1rem; right: 0.75rem; }
+      .edit-toolbar button { font-size: 0.78rem; padding: 0.5rem 1rem; }
     }
 
     /* ==========================================
-       PRINT — 打印样式
+       PRINT
        ========================================== */
     @media print {
-      body {
-        background: #fff;
-        padding: 0;
-        font-size: 12px;
-      }
-      .experience-card,
-      .contact-item {
-        box-shadow: none;
-        break-inside: avoid;
-      }
-      .social-links a {
-        border: none;
-        padding: 0 0.5rem;
-      }
+      body { background: #fff; padding: 0; font-size: 12px; }
+      .experience-card, .contact-item { box-shadow: none; break-inside: avoid; }
+      .social-links a { border: none; padding: 0 0.5rem; }
+      .edit-toolbar, .edit-hint, .modal-overlay { display: none !important; }
     }
   </style>
 </head>
 <body>
 
+  <!-- 顶部编辑提示 -->
+  <div class="edit-hint" id="editHint">💡 直接点击蓝色虚线框内的文字即可修改</div>
+
+  <!-- 右下角浮动按钮 -->
+  <div class="edit-toolbar">
+    <button class="btn-export" id="btnExport">📋 导出 HTML</button>
+    <button class="btn-edit" id="btnEdit">✏️ 编辑模式</button>
+  </div>
+
+  <!-- 导出弹窗 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📋 导出修改后的 HTML</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>👇 复制下面的全部代码，粘贴回 GitHub 的 <code>index.html</code> 即可</p>
+        <pre id="modalCode"></pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-copy" id="btnCopy">📋 一键复制</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 简历内容 ========== -->
   <div class="resume">
 
-    <!-- ==========================================
-         HEADER — 个人简介
-         ========================================== -->
     <header class="header">
-      <!-- 头像：可替换为 <img> 标签 -->
       <div class="avatar" aria-label="头像">👤</div>
 
-      <h1>张 三</h1>
-      <p class="title">前端开发工程师 · 全栈爱好者</p>
-      <p class="bio">
+      <h1 data-editable>张 三</h1>
+      <p class="title" data-editable>前端开发工程师 · 全栈爱好者</p>
+      <p class="bio" data-editable>
         3 年 Web 开发经验，热爱构建简洁、好用的产品。
         擅长 React / Vue 生态，对设计系统与用户体验有深入理解。
         目前正在探索 Rust 与 WebAssembly。
       </p>
 
-      <!--
-        ★ 预留链接位置 ★
-        替换 href 里的 # 为你自己的链接
-      -->
       <div class="social-links">
-        <!-- GitHub 图标 + 链接 — 替换 href="#", -->
+        <!-- ★ 链接地址请在导出后搜索 "#" 替换 ★ -->
         <a href="#" target="_blank" rel="noopener" aria-label="GitHub">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
           </svg>
-          GitHub
+          <span data-editable>GitHub</span>
         </a>
 
-        <!-- 个人主页链接 — 替换 href="#" -->
         <a href="#" target="_blank" rel="noopener" aria-label="个人主页">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="2" y1="12" x2="22" y2="12"/>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
           </svg>
-          个人主页
+          <span data-editable>个人主页</span>
         </a>
 
-        <!-- 邮箱 — 替换 href="#" -->
         <a href="mailto:yourname@example.com" aria-label="邮箱">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
             <path d="M22 4L12 13 2 4"/>
           </svg>
-          邮箱
+          <span data-editable>邮箱</span>
         </a>
       </div>
     </header>
 
-    <!-- ==========================================
-         WORK EXPERIENCE — 工作经历
-         ========================================== -->
     <section class="section">
       <h2 class="section-title">📋 工作经历</h2>
 
       <div class="experience-card">
-        <p class="role">前端开发工程师</p>
-        <p class="company">ABC 科技有限公司</p>
+        <p class="role" data-editable>前端开发工程师</p>
+        <p class="company" data-editable>ABC 科技有限公司</p>
         <div class="meta">
-          <span class="duration">2024.03 — 至今</span>
+          <span class="duration" data-editable>2024.03 — 至今</span>
         </div>
         <ul class="desc">
-          <li>负责公司核心产品后台管理系统的前端架构设计与开发</li>
-          <li>使用 React + TypeScript 重构旧版 jQuery 项目，性能提升 40%</li>
-          <li>搭建组件库与设计规范，推动团队代码复用率提升 60%</li>
+          <li data-editable>负责公司核心产品后台管理系统的前端架构设计与开发</li>
+          <li data-editable>使用 React + TypeScript 重构旧版 jQuery 项目，性能提升 40%</li>
+          <li data-editable>搭建组件库与设计规范，推动团队代码复用率提升 60%</li>
         </ul>
       </div>
 
       <div class="experience-card">
-        <p class="role">初级前端开发</p>
-        <p class="company">XYZ 创业公司</p>
+        <p class="role" data-editable>初级前端开发</p>
+        <p class="company" data-editable>XYZ 创业公司</p>
         <div class="meta">
-          <span class="duration">2022.07 — 2024.02</span>
+          <span class="duration" data-editable>2022.07 — 2024.02</span>
         </div>
         <ul class="desc">
-          <li>参与电商小程序开发，使用 Vue3 + Pinia 技术栈</li>
-          <li>独立完成营销活动页面的响应式适配与交互优化</li>
-          <li>配合后端完成 RESTful API 对接与数据联调</li>
+          <li data-editable>参与电商小程序开发，使用 Vue3 + Pinia 技术栈</li>
+          <li data-editable>独立完成营销活动页面的响应式适配与交互优化</li>
+          <li data-editable>配合后端完成 RESTful API 对接与数据联调</li>
         </ul>
       </div>
     </section>
 
-    <!-- ==========================================
-         SKILLS — 技能栈
-         ========================================== -->
     <section class="section">
       <h2 class="section-title">🛠 技能栈</h2>
 
       <div class="skills-grid">
-        <span class="skill-tag">HTML5</span>
-        <span class="skill-tag">CSS3 / Sass</span>
-        <span class="skill-tag">JavaScript (ES6+)</span>
-        <span class="skill-tag">TypeScript</span>
-        <span class="skill-tag">React</span>
-        <span class="skill-tag">Vue 3</span>
-        <span class="skill-tag">Next.js</span>
-        <span class="skill-tag">Tailwind CSS</span>
-        <span class="skill-tag">Node.js</span>
-        <span class="skill-tag">Git / GitHub</span>
-        <span class="skill-tag">Figma</span>
-        <span class="skill-tag">Rust（学习中）</span>
+        <span class="skill-tag" data-editable>HTML5</span>
+        <span class="skill-tag" data-editable>CSS3 / Sass</span>
+        <span class="skill-tag" data-editable>JavaScript (ES6+)</span>
+        <span class="skill-tag" data-editable>TypeScript</span>
+        <span class="skill-tag" data-editable>React</span>
+        <span class="skill-tag" data-editable>Vue 3</span>
+        <span class="skill-tag" data-editable>Next.js</span>
+        <span class="skill-tag" data-editable>Tailwind CSS</span>
+        <span class="skill-tag" data-editable>Node.js</span>
+        <span class="skill-tag" data-editable>Git / GitHub</span>
+        <span class="skill-tag" data-editable>Figma</span>
+        <span class="skill-tag" data-editable>Rust（学习中）</span>
       </div>
     </section>
 
-    <!-- ==========================================
-         CONTACT — 联系方式
-         ========================================== -->
     <section class="section">
       <h2 class="section-title">📬 联系方式</h2>
 
@@ -498,9 +591,7 @@
           </div>
           <div>
             <p class="label">邮箱</p>
-            <p class="value">
-              <a href="mailto:yourname@example.com">yourname@example.com</a>
-            </p>
+            <p class="value"><a href="mailto:yourname@example.com" data-editable>yourname@example.com</a></p>
           </div>
         </div>
 
@@ -512,7 +603,7 @@
           </div>
           <div>
             <p class="label">电话</p>
-            <p class="value">+86 138-0000-0000</p>
+            <p class="value" data-editable>+86 138-0000-0000</p>
           </div>
         </div>
 
@@ -525,18 +616,15 @@
           </div>
           <div>
             <p class="label">所在地</p>
-            <p class="value">中国 · 北京</p>
+            <p class="value" data-editable>中国 · 北京</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         FOOTER
-         ========================================== -->
     <footer class="footer">
       <p>
-        © 2026 张三 · 由
+        © 2026 <span data-editable>张三</span> · 由
         <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a>
         驱动 · 源码托管于
         <a href="#" target="_blank" rel="noopener">GitHub</a>
@@ -544,6 +632,128 @@
     </footer>
 
   </div>
+
+  <!-- ========== 编辑功能的 JavaScript ========== -->
+  <script>
+    (function() {
+      var btnEdit   = document.getElementById('btnEdit');
+      var btnExport = document.getElementById('btnExport');
+      var editHint  = document.getElementById('editHint');
+      var modalOverlay = document.getElementById('modalOverlay');
+      var modalCode   = document.getElementById('modalCode');
+      var btnCopy     = document.getElementById('btnCopy');
+      var modalClose  = document.getElementById('modalClose');
+      var editing = false;
+
+      // ------ 切换编辑模式 ------
+      btnEdit.addEventListener('click', function() {
+        editing = !editing;
+
+        if (editing) {
+          document.body.classList.add('editing');
+          btnEdit.textContent = '✅ 完成编辑';
+          btnEdit.classList.add('active');
+          btnExport.classList.add('show');
+          editHint.classList.add('show');
+
+          setTimeout(function() { editHint.classList.remove('show'); }, 5000);
+
+          document.querySelectorAll('[data-editable]').forEach(function(el) {
+            el.setAttribute('contenteditable', 'true');
+          });
+        } else {
+          document.body.classList.remove('editing');
+          btnEdit.textContent = '✏️ 编辑模式';
+          btnEdit.classList.remove('active');
+          btnExport.classList.remove('show');
+          editHint.classList.remove('show');
+
+          document.querySelectorAll('[data-editable]').forEach(function(el) {
+            el.removeAttribute('contenteditable');
+          });
+        }
+      });
+
+      // ------ 导出 HTML ------
+      btnExport.addEventListener('click', function() {
+        var wasEditing = editing;
+        if (wasEditing) {
+          document.body.classList.remove('editing');
+          document.querySelectorAll('[data-editable]').forEach(function(el) {
+            el.removeAttribute('contenteditable');
+          });
+        }
+
+        var clone = document.documentElement.cloneNode(true);
+
+        if (wasEditing) {
+          document.body.classList.add('editing');
+          document.querySelectorAll('[data-editable]').forEach(function(el) {
+            el.setAttribute('contenteditable', 'true');
+          });
+        }
+
+        // 移除编辑工具栏
+        ['.edit-toolbar', '.edit-hint', '.modal-overlay'].forEach(function(sel) {
+          var el = clone.querySelector(sel);
+          if (el) el.remove();
+        });
+
+        // 清理属性
+        clone.querySelectorAll('[contenteditable]').forEach(function(el) {
+          el.removeAttribute('contenteditable');
+        });
+        clone.querySelectorAll('[data-editable]').forEach(function(el) {
+          el.removeAttribute('data-editable');
+        });
+
+        // 移除 script
+        clone.querySelectorAll('script').forEach(function(s) { s.remove(); });
+
+        var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+
+        modalCode.textContent = html;
+        modalOverlay.classList.add('show');
+        btnCopy.textContent = '📋 一键复制';
+        btnCopy.classList.remove('copied');
+      });
+
+      // ------ 关闭弹窗 ------
+      function closeModal() { modalOverlay.classList.remove('show'); }
+      modalClose.addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) closeModal();
+      });
+
+      // ------ 一键复制 ------
+      btnCopy.addEventListener('click', function() {
+        var text = modalCode.textContent;
+        navigator.clipboard.writeText(text).then(function() {
+          btnCopy.textContent = '✅ 已复制！';
+          btnCopy.classList.add('copied');
+          setTimeout(function() {
+            btnCopy.textContent = '📋 一键复制';
+            btnCopy.classList.remove('copied');
+          }, 2000);
+        }).catch(function() {
+          var range = document.createRange();
+          range.selectNodeContents(modalCode);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          btnCopy.textContent = '⚠ 请手动 Ctrl+C';
+        });
+      });
+
+      // ------ Esc 关闭 ------
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modalOverlay.classList.contains('show')) {
+          closeModal();
+        }
+      });
+
+    })();
+  </script>
 
 </body>
 </html>
