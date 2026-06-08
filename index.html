@@ -752,4 +752,266 @@
 
 
 
-</body></html>
+      function startEdit(el) {
+        el.setAttribute('contenteditable', 'true');
+        el.focus();
+
+        // 选中全部文字
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        showToast('✨ 正在编辑中，点击其他地方或按 Esc 退出编辑');
+      }
+
+      function stopEdit(el) {
+        el.removeAttribute('contenteditable');
+      }
+
+      function stopAllEdits() {
+        document.querySelectorAll('[contenteditable="true"]').forEach(function(el) {
+          el.removeAttribute('contenteditable');
+        });
+      }
+
+      // 点击空白处退出编辑
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-editable]')) return;
+        if (e.target.closest('.add-btn')) return;
+        if (e.target.closest('.delete-btn')) return;
+        if (e.target.closest('.delete-tag-btn')) return;
+        if (e.target.closest('.export-btn')) return;
+        if (e.target.closest('.reset-btn')) return;
+        stopAllEdits();
+        hideToast();
+      });
+
+      // Esc 退出编辑
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          if (modalOverlay.classList.contains('show')) {
+            closeModal();
+            return;
+          }
+          stopAllEdits();
+          hideToast();
+        }
+      });
+
+      function showToast(msg) {
+        editToast.textContent = msg;
+        editToast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function() { editToast.classList.remove('show'); }, 2500);
+      }
+
+      function hideToast() {
+        editToast.classList.remove('show');
+        clearTimeout(toastTimer);
+      }
+
+      // ========== localStorage 自动保存 ==========
+      var AUTOSAVE_KEY = 'resume-autosave-v4';
+      var saveTimer = null;
+
+      // 记录页面从文件加载时的原始指纹（在恢复 localStorage 之前）
+      var resumeEl = document.querySelector('.resume');
+      var ORIGINAL_FINGERPRINT = resumeEl.innerHTML.length + '|' + resumeEl.innerHTML.substring(0, 200);
+
+      function saveToLocal() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(function() {
+          var resume = document.querySelector('.resume');
+          var data = {
+            html: resume.innerHTML,
+            fingerprint: ORIGINAL_FINGERPRINT,
+            time: Date.now()
+          };
+          try {
+            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+          } catch(e) {
+            // localStorage 不可用，忽略
+          }
+        }, 300); // 防抖 300ms
+      }
+
+      function loadFromLocal() {
+        try {
+          var raw = localStorage.getItem(AUTOSAVE_KEY);
+          if (!raw) return false;
+          var data = JSON.parse(raw);
+          // 如果页面文件已更新（指纹不同），丢弃旧数据，以文件内容为准
+          if (!data.fingerprint || data.fingerprint !== ORIGINAL_FINGERPRINT) {
+            console.log('📄 检测到页面已更新，清除旧缓存');
+            localStorage.removeItem(AUTOSAVE_KEY);
+            return false;
+          }
+          if (data && data.html) {
+            document.querySelector('.resume').innerHTML = data.html;
+            return true;
+          }
+        } catch(e) {
+          // 数据损坏，清除
+          localStorage.removeItem(AUTOSAVE_KEY);
+        }
+        return false;
+      }
+
+      function clearLocalData() {
+        localStorage.removeItem(AUTOSAVE_KEY);
+        location.reload();
+      }
+
+      // 页面加载时恢复
+      if (loadFromLocal()) {
+        console.log('✅ 已从本地存储恢复编辑内容');
+      }
+
+      // 内容编辑后自动保存（事件委托监听 blur）
+      document.addEventListener('blur', function(e) {
+        if (e.target.closest('[data-editable]')) {
+          saveToLocal();
+        }
+      }, true); // 捕获阶段，确保能捕获到 blur
+
+      // 内容编辑时实时保存（作为备份）
+      document.addEventListener('input', function(e) {
+        if (e.target.closest('[data-editable]')) {
+          saveToLocal();
+        }
+      });
+
+      // ========== "+" 按钮 — 添加卡片 ==========
+      window.addCard = function(sectionId) {
+        var section = document.getElementById(sectionId);
+        var addWrap = section.querySelector('.add-btn-wrap');
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'card-wrapper';
+
+        var delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.title = '删除此项';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', function() {
+          wrapper.remove();
+        });
+        wrapper.appendChild(delBtn);
+
+        var card = document.createElement('div');
+        card.className = 'experience-card';
+        card.innerHTML =
+          '<p class="role" data-editable>新条目标题</p>' +
+          '<p class="company" data-editable>副标题</p>' +
+          '<div class="meta"><span class="duration" data-editable>时间</span></div>' +
+          '<ul class="desc">' +
+            '<li data-editable>描述内容（双击编辑）</li>' +
+          '</ul>';
+        wrapper.appendChild(card);
+
+        // 插入到 + 按钮之前
+        section.insertBefore(wrapper, addWrap);
+        saveToLocal();
+      };
+
+      // ========== "+" 按钮 — 添加技能 ==========
+      window.addSkill = function() {
+        var grid = document.getElementById('skillsGrid');
+
+        var wrap = document.createElement('span');
+        wrap.className = 'skill-tag-wrap';
+
+        var delBtn = document.createElement('button');
+        delBtn.className = 'delete-tag-btn';
+        delBtn.title = '删除';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', function() {
+          wrap.remove();
+        });
+        wrap.appendChild(delBtn);
+
+        var tag = document.createElement('span');
+        tag.className = 'skill-tag';
+        tag.setAttribute('data-editable', '');
+        tag.textContent = '新技能';
+        wrap.appendChild(tag);
+
+        grid.appendChild(wrap);
+        saveToLocal();
+      };
+
+      // ========== 删除卡片（事件委托） ==========
+      document.addEventListener('click', function(e) {
+        var delBtn = e.target.closest('.delete-btn');
+        if (delBtn) {
+          delBtn.closest('.card-wrapper').remove();
+          saveToLocal();
+        }
+        var delTag = e.target.closest('.delete-tag-btn');
+        if (delTag) {
+          delTag.closest('.skill-tag-wrap').remove();
+          saveToLocal();
+        }
+      });
+
+      // ========== 导出 HTML ==========
+      btnExport.addEventListener('click', function() {
+        stopAllEdits();
+
+        var clone = document.documentElement.cloneNode(true);
+
+        // 仅移除「开发用」UI 元素，保留所有编辑功能
+        ['.export-btn', '.modal-overlay'].forEach(function(sel) {
+          clone.querySelectorAll(sel).forEach(function(el) { el.remove(); });
+        });
+
+        var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+
+        modalCode.textContent = html;
+        modalOverlay.classList.add('show');
+        btnCopy.textContent = '📋 一键复制';
+        btnCopy.classList.remove('copied');
+      });
+
+      // ========== 重置按钮 ==========
+      var btnReset = document.getElementById('btnReset');
+      btnReset.addEventListener('click', function() {
+        if (confirm('确定要恢复到原始内容吗？\n\n你当前的所有编辑将被清除，页面将重新加载。')) {
+          clearLocalData();
+        }
+      });
+
+      // ========== 弹窗 ==========
+      function closeModal() { modalOverlay.classList.remove('show'); }
+      modalClose.addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) closeModal();
+      });
+
+      // ========== 复制 ==========
+      btnCopy.addEventListener('click', function() {
+        var text = modalCode.textContent;
+        navigator.clipboard.writeText(text).then(function() {
+          btnCopy.textContent = '✅ 已复制！';
+          btnCopy.classList.add('copied');
+          setTimeout(function() {
+            btnCopy.textContent = '📋 一键复制';
+            btnCopy.classList.remove('copied');
+          }, 2000);
+        }).catch(function() {
+          var range = document.createRange();
+          range.selectNodeContents(modalCode);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          btnCopy.textContent = '⚠ 请手动 Ctrl+C';
+        });
+      });
+
+    })();
+  </script>
+
+</body>
+</html>
