@@ -55,7 +55,7 @@ index.html
 | `clearLocalData()` | 清除 localStorage 并刷新页面 |
 
 ### localStorage 键名
-- `resume-autosave-v2` — 存储序列化的简历 HTML 和保存时间戳
+- `resume-autosave-v3` — 存储序列化的简历 HTML 和保存时间戳
 
 ## 常见任务
 
