@@ -68,7 +68,7 @@ index.html
 - 如需永久更新源代码，编辑后用「导出 HTML」按钮复制代码替换 `index.html`
 
 ### 部署
-- `git add index.html && git commit -m "..." && git push origin main`
+- 每次修改后自动执行：`git add` → `git commit` → `git push origin main`
 - GitHub Pages 自动部署，1-2 分钟后在 `bufang112233.github.io` 生效
 
 ## Git 远程
